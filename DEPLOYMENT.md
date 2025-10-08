@@ -1,29 +1,13 @@
 # Deployment Guide
 
-## Quick Deployment Steps
+## Quick Deployment Steps (Recommended)
 
-### 1. Clone and Setup
+### 1. Install Globally from GitHub
 ```bash
-git clone <your-repository-url>
-cd canvas-mcp
-npm install
-npm run build
+npm install -g git+https://github.com/mandaza/mcp-canvas-lms-student.git
 ```
 
-### 2. Configure Canvas API Access
-
-Create `.env` file:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your Canvas credentials:
-```env
-CANVAS_BASE_URL=https://your-institution.instructure.com
-CANVAS_ACCESS_TOKEN=your_canvas_access_token_here
-```
-
-### 3. Configure Claude Desktop
+### 2. Configure Claude Desktop
 
 Add to your Claude Desktop configuration file:
 
@@ -35,8 +19,7 @@ Add to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "canvas": {
-      "command": "node",
-      "args": ["/absolute/path/to/canvas-mcp/dist/index.js"],
+      "command": "canvas-mcp",
       "env": {
         "CANVAS_BASE_URL": "https://your-institution.instructure.com",
         "CANVAS_ACCESS_TOKEN": "your_canvas_access_token_here"
@@ -46,11 +29,38 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
-### 4. Restart Claude Desktop
+## Alternative: Local Development Setup
+
+### 1. Clone and Setup
+```bash
+git clone https://github.com/mandaza/mcp-canvas-lms-student.git
+cd mcp-canvas-lms-student
+npm install
+npm run build
+```
+
+### 2. Configure Claude Desktop (Local Path)
+
+```json
+{
+  "mcpServers": {
+    "canvas": {
+      "command": "node",
+      "args": ["/absolute/path/to/mcp-canvas-lms-student/dist/index.js"],
+      "env": {
+        "CANVAS_BASE_URL": "https://your-institution.instructure.com",
+        "CANVAS_ACCESS_TOKEN": "your_canvas_access_token_here"
+      }
+    }
+  }
+}
+```
+
+### 3. Restart Claude Desktop
 
 Completely restart Claude Desktop for the configuration to take effect.
 
-### 5. Test
+### 4. Test
 
 Try asking Claude: "Show me my Canvas courses"
 
@@ -76,14 +86,23 @@ Try asking Claude: "Show me my Canvas courses"
 
 **Verify Installation:**
 ```bash
-# Test the server directly
-node dist/index.js
+# Test the global installation
+canvas-mcp
 # Should output: "Canvas MCP Server running on stdio"
+
+# Or test local installation
+node dist/index.js
 ```
 
 ## Updates
 
-To update the server:
+### Global Installation Updates
+```bash
+npm update -g git+https://github.com/mandaza/mcp-canvas-lms-student.git
+# Restart Claude Desktop
+```
+
+### Local Installation Updates
 ```bash
 git pull
 npm install

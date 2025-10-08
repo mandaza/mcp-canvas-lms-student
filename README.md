@@ -36,34 +36,29 @@ A Model Context Protocol (MCP) server that provides comprehensive access to Canv
 - Canvas LMS access token
 - Canvas LMS instance URL
 
-### Setup
+### Quick Installation (Recommended)
+
+Install globally from GitHub:
+
+```bash
+npm install -g git+https://github.com/mandaza/mcp-canvas-lms-student.git
+```
+
+### Alternative: Local Development Installation
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
-   cd canvas-mcp
+   git clone https://github.com/mandaza/mcp-canvas-lms-student.git
+   cd mcp-canvas-lms-student
    npm install
    ```
 
-2. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Canvas credentials
-   ```
-
-3. **Build the server:**
+2. **Build the server:**
    ```bash
    npm run build
    ```
 
 ## Configuration
-
-Create a `.env` file with your Canvas LMS configuration:
-
-```env
-CANVAS_BASE_URL=https://your-institution.instructure.com
-CANVAS_ACCESS_TOKEN=your_canvas_access_token_here
-```
 
 ### Getting a Canvas Access Token
 
@@ -72,9 +67,9 @@ CANVAS_ACCESS_TOKEN=your_canvas_access_token_here
 3. Scroll down to "Approved Integrations"
 4. Click "+ New Access Token"
 5. Give it a purpose (e.g., "MCP Server Access")
-6. Copy the generated token to your `.env` file
+6. Copy the generated token for use in Claude Desktop
 
-⚠️ **Important**: Keep your access token secure and never commit it to version control.
+⚠️ **Important**: Keep your access token secure and never share it.
 
 ## Usage with Claude Desktop
 
@@ -84,8 +79,7 @@ Add this configuration to your Claude Desktop settings:
 {
   "mcpServers": {
     "canvas": {
-      "command": "node",
-      "args": ["/absolute/path/to/canvas-mcp/dist/index.js"],
+      "command": "canvas-mcp",
       "env": {
         "CANVAS_BASE_URL": "https://your-institution.instructure.com",
         "CANVAS_ACCESS_TOKEN": "your_canvas_access_token_here"
