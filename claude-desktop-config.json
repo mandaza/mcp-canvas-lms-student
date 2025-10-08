@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "canvas": {
+      "command": "node",
+      "args": ["/absolute/path/to/canvas-mcp/dist/index.js"],
+      "env": {
+        "CANVAS_BASE_URL": "https://your-institution.instructure.com",
+        "CANVAS_ACCESS_TOKEN": "your_canvas_access_token_here"
+      }
+    }
+  }
+}
