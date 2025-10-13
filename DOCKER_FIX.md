@@ -24,17 +24,27 @@ The new Dockerfile uses a **multi-stage build** approach:
 
 ### 2. Updated package.json
 
-Changed from:
+Removed the `prepare`/`postinstall` script entirely:
 ```json
-"prepare": "npm run build"
+"scripts": {
+  "build": "tsc && chmod 755 dist/index.js && chmod 755 dist/openwebui-server.js",
+  "dev": "tsc --watch",
+  "start": "node dist/index.js",
+  "start:http": "node dist/openwebui-server.js",
+  "clean": "rm -rf dist"
+}
 ```
 
-To:
-```json
-"postinstall": "test -d dist || npm run build"
+No post-install hooks means no build attempts during production installs.
+
+### 3. Updated Dockerfile
+
+Added `--ignore-scripts` flag to production npm install:
+```dockerfile
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 ```
 
-This only builds if `dist` doesn't exist, preventing build attempts during production installs.
+This ensures no scripts run during production dependency installation.
 
 ## How to Deploy on Your Server
 

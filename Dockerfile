@@ -34,8 +34,8 @@ RUN apk add --no-cache python3 make g++
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --omit=dev && npm cache clean --force
+# Install only production dependencies (ignore scripts to prevent postinstall)
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist

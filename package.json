@@ -13,8 +13,7 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "start:http": "node dist/openwebui-server.js",
-    "clean": "rm -rf dist",
-    "postinstall": "test -d dist || npm run build"
+    "clean": "rm -rf dist"
   },
   "files": [
     "dist",
