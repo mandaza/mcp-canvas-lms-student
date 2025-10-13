@@ -1,7 +1,7 @@
 # Canvas MCP Server - Production Dockerfile
 
 # Use Node.js 18 Alpine for smaller image size
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -11,25 +11,34 @@ RUN apk add --no-cache python3 make g++
 
 # Copy package files
 COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
-
-# Copy TypeScript configuration
 COPY tsconfig.json ./
+
+# Install ALL dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY src ./src
 
 # Build TypeScript
-RUN npm install -g typescript && \
-    npm run build && \
-    npm uninstall -g typescript
+RUN npm run build
 
-# Remove source files and dev dependencies
-RUN rm -rf src node_modules && \
-    npm ci --only=production && \
-    npm cache clean --force
+# Production stage
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for build (needed for native modules)
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist ./dist
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \

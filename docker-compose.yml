@@ -35,9 +35,6 @@ services:
         limits:
           cpus: '1'
           memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
 
     # Health check
     healthcheck:
