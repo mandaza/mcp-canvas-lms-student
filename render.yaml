@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: canvas-mcp-server
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:http
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+
+      - key: CANVAS_BASE_URL
+        sync: false
+
+      - key: CANVAS_ACCESS_TOKEN
+        sync: false
+
+      - key: API_KEY
+        sync: false
+        generateValue: true
+
+      - key: PORT
+        value: 3001
+
+      - key: HOST
+        value: 0.0.0.0
+
+      - key: NODE_ENV
+        value: production
+
+      - key: LOG_LEVEL
+        value: info

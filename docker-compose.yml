@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  canvas-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: canvas-mcp-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Canvas Configuration
+      - CANVAS_BASE_URL=${CANVAS_BASE_URL}
+      - CANVAS_ACCESS_TOKEN=${CANVAS_ACCESS_TOKEN}
+
+      # Server Configuration
+      - PORT=3001
+      - HOST=0.0.0.0
+
+      # Security
+      - API_KEY=${API_KEY}
+
+      # Optional: Logging
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - NODE_ENV=${NODE_ENV:-production}
+
+    # Use env_file instead of inline environment variables (more secure)
+    env_file:
+      - .env
+
+    # Resource limits (optional but recommended)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Networks
+    networks:
+      - canvas-mcp-network
+
+networks:
+  canvas-mcp-network:
+    driver: bridge

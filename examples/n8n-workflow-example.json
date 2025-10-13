@@ -1,0 +1,245 @@
+{
+  "name": "Canvas Assignment Tracker - Complete Example",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        },
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 8,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 8 AM Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/message",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"id\": \"{{ $runIndex }}-list-courses\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_courses\",\n    \"arguments\": {}\n  }\n}"
+      },
+      "id": "http-list-courses",
+      "name": "Get All Courses",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the MCP response and extract courses\nconst responseText = $input.item.json.result.content[0].text;\nconst courses = JSON.parse(responseText);\n\n// Return each course as a separate item for processing\nreturn courses.map((course, index) => ({\n  json: {\n    course_id: course.id.toString(),\n    course_name: course.name,\n    course_code: course.course_code,\n    index: index\n  }\n}));"
+      },
+      "id": "code-parse-courses",
+      "name": "Parse Courses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:3001/message",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"id\": \"{{ $json.course_id }}-list-assignments\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_assignments\",\n    \"arguments\": {\n      \"course_id\": \"{{ $json.course_id }}\"\n    }\n  }\n}"
+      },
+      "id": "http-list-assignments",
+      "name": "Get Course Assignments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse assignments and filter for upcoming ones (due within 7 days)\nconst responseText = $input.item.json.result.content[0].text;\nconst assignments = JSON.parse(responseText);\n\nconst now = new Date();\nconst weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);\n\nconst upcomingAssignments = assignments.filter(assignment => {\n  if (!assignment.due_at) return false;\n  const dueDate = new Date(assignment.due_at);\n  return dueDate >= now && dueDate <= weekFromNow;\n});\n\n// Return with course context\nreturn upcomingAssignments.map(assignment => ({\n  json: {\n    course_name: $input.item.json.course_name,\n    course_code: $input.item.json.course_code,\n    assignment_id: assignment.id.toString(),\n    assignment_name: assignment.name,\n    due_at: assignment.due_at,\n    points_possible: assignment.points_possible,\n    html_url: assignment.html_url,\n    description: assignment.description?.substring(0, 200) || 'No description'\n  }\n}));"
+      },
+      "id": "code-filter-assignments",
+      "name": "Filter Upcoming Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.assignment_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-assignments",
+      "name": "Has Assignments?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all assignments into a single formatted message\nconst assignments = $input.all();\n\nif (assignments.length === 0) {\n  return [{ json: { message: 'No upcoming assignments in the next 7 days!' } }];\n}\n\n// Group by course\nconst byCourse = {};\nassignments.forEach(item => {\n  const courseName = item.json.course_name;\n  if (!byCourse[courseName]) {\n    byCourse[courseName] = [];\n  }\n  byCourse[courseName].push(item.json);\n});\n\n// Format message\nlet message = '📚 Upcoming Assignments (Next 7 Days)\\n\\n';\n\nfor (const [courseName, courseAssignments] of Object.entries(byCourse)) {\n  message += `**${courseName}**\\n`;\n  courseAssignments.forEach(assignment => {\n    const dueDate = new Date(assignment.due_at);\n    const dateStr = dueDate.toLocaleDateString('en-US', { \n      month: 'short', \n      day: 'numeric', \n      hour: '2-digit', \n      minute: '2-digit' \n    });\n    message += `  • ${assignment.assignment_name}\\n`;\n    message += `    Due: ${dateStr} | Points: ${assignment.points_possible}\\n`;\n    message += `    Link: ${assignment.html_url}\\n\\n`;\n  });\n  message += '\\n';\n}\n\nmessage += `\\nTotal assignments: ${assignments.length}`;\n\nreturn [{ json: { \n  subject: `You have ${assignments.length} assignment(s) due this week`,\n  message: message,\n  assignmentCount: assignments.length\n}}];"
+      },
+      "id": "code-format-message",
+      "name": "Format Email Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "your-email@example.com",
+        "toEmail": "student@example.com",
+        "subject": "={{ $json.subject }}",
+        "text": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "email-send",
+      "name": "Send Email Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1650, 200],
+      "notes": "Configure your email credentials in n8n settings"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "message",
+              "value": "No upcoming assignments found in the next 7 days. Enjoy your week!",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-no-assignments",
+      "name": "No Assignments Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1450, 400]
+    }
+  ],
+  "connections": {
+    "Daily 8 AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Courses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Courses": {
+      "main": [
+        [
+          {
+            "node": "Parse Courses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Courses": {
+      "main": [
+        [
+          {
+            "node": "Get Course Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Course Assignments": {
+      "main": [
+        [
+          {
+            "node": "Filter Upcoming Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Upcoming Assignments": {
+      "main": [
+        [
+          {
+            "node": "Has Assignments?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Assignments?": {
+      "main": [
+        [
+          {
+            "node": "Format Email Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Assignments Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email Message": {
+      "main": [
+        [
+          {
+            "node": "Send Email Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-10-13T00:00:00.000Z",
+  "versionId": "1"
+}

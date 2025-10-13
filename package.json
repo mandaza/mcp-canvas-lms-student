@@ -5,12 +5,14 @@
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "canvas-mcp": "./dist/index.js"
+    "canvas-mcp": "./dist/index.js",
+    "canvas-mcp-http": "./dist/openwebui-server.js"
   },
   "scripts": {
-    "build": "tsc && chmod 755 dist/index.js",
+    "build": "tsc && chmod 755 dist/index.js && chmod 755 dist/openwebui-server.js",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "start:http": "node dist/openwebui-server.js",
     "clean": "rm -rf dist",
     "prepare": "npm run build"
   },
@@ -32,9 +34,15 @@
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
-    "axios": "^1.12.2",
-    "dotenv": "^17.2.3",
     "@types/node": "^24.7.0",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3"
   }
 }

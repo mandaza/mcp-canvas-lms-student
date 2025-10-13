@@ -71,7 +71,11 @@ npm install -g git+https://github.com/mandaza/mcp-canvas-lms-student.git
 
 ⚠️ **Important**: Keep your access token secure and never share it.
 
-## Usage with Claude Desktop
+## Integration Options
+
+This MCP server supports multiple integration modes:
+
+### Option 1: Claude Desktop (stdio mode)
 
 Add this configuration to your Claude Desktop settings:
 
@@ -89,11 +93,38 @@ Add this configuration to your Claude Desktop settings:
 }
 ```
 
-### Configuration File Locations
-
+**Configuration File Locations:**
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\\Claude\\claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+### Option 2: Open WebUI (HTTP/SSE mode)
+
+For Open WebUI integration, see the detailed [Open WebUI Setup Guide](OPENWEBUI_SETUP.md).
+
+**Quick Start:**
+
+1. Create a `.env` file with your Canvas credentials and server configuration
+2. Start the HTTP server: `npm run start:http`
+3. In Open WebUI Admin Settings → External Tools, add an MCP server:
+   - Type: `MCP (Streamable HTTP)`
+   - Server URL: `http://localhost:3001/sse`
+   - (Use `http://host.docker.internal:3001/sse` if Open WebUI is in Docker)
+
+### Option 3: n8n Workflows (HTTP mode)
+
+For n8n workflow automation, see the detailed [n8n Integration Guide](N8N_INTEGRATION.md).
+
+**Quick Start:**
+
+1. Start the HTTP server: `npm run start:http`
+2. In n8n, use the **HTTP Request** node with:
+   - Method: POST
+   - URL: `http://localhost:3001/message`
+   - Body: MCP JSON-RPC format
+3. Check the guide for complete workflow examples
+
+All modes can run simultaneously if needed!
 
 ## Available Tools
 
@@ -193,6 +224,39 @@ src/
 - Verify your Canvas instance is accessible
 - Check network connectivity
 - Ensure Canvas isn't undergoing maintenance
+
+## Deployment & Hosting
+
+To use your MCP server from anywhere (not just localhost), you need to host it on a server or cloud platform.
+
+### Quick Start Guides
+
+- **[Quick Start Deployment](QUICKSTART_DEPLOYMENT.md)** - Deploy in 10 minutes with Railway.app
+- **[Full Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete guide for all hosting options
+- **[Security Guide](SECURITY.md)** - API key authentication and best practices
+
+### Hosting Options
+
+| Platform | Time | Cost | Best For |
+|----------|------|------|----------|
+| Railway.app | 10 min | Free tier | Easiest deployment |
+| Render.com | 10 min | Free tier | Simple setup |
+| DigitalOcean VPS | 20 min | $4-6/month | Full control |
+| Docker | 15 min | Varies | Containerized apps |
+
+### Security (Required for Production!)
+
+Before deploying to production, **you must add API key authentication**:
+
+```bash
+# Generate a secure API key
+openssl rand -hex 32
+
+# Add to your .env file
+API_KEY=your_generated_key_here
+```
+
+See [SECURITY.md](SECURITY.md) for detailed setup instructions.
 
 ## License
 
