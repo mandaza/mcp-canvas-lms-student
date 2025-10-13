@@ -253,7 +253,21 @@ app.post('/sse', async (req: Request, res: Response) => {
     let response;
 
     // Handle different MCP request types
-    if (message.method === 'tools/list') {
+    if (message.method === 'initialize') {
+      // MCP initialization handshake
+      response = {
+        protocolVersion: "2024-11-05",
+        capabilities: {
+          tools: {},
+          resources: {},
+          prompts: {}
+        },
+        serverInfo: {
+          name: "canvas-mcp",
+          version: "1.0.0"
+        }
+      };
+    } else if (message.method === 'tools/list') {
       response = { tools: allTools };
     } else if (message.method === 'tools/call') {
       response = await executeTool(message.params.name, message.params.arguments);
@@ -287,7 +301,21 @@ app.post('/message', async (req: Request, res: Response) => {
     let response;
 
     // Handle different MCP request types
-    if (message.method === 'tools/list') {
+    if (message.method === 'initialize') {
+      // MCP initialization handshake
+      response = {
+        protocolVersion: "2024-11-05",
+        capabilities: {
+          tools: {},
+          resources: {},
+          prompts: {}
+        },
+        serverInfo: {
+          name: "canvas-mcp",
+          version: "1.0.0"
+        }
+      };
+    } else if (message.method === 'tools/list') {
       response = { tools: allTools };
     } else if (message.method === 'tools/call') {
       response = await executeTool(message.params.name, message.params.arguments);
